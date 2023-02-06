@@ -8,15 +8,14 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 )
 
+// -----------------------------------------dijistra----------------------------------------
 const NO_ROUTE int = 99999
 
 func getLength(n int, length []int, last []int, matrice [][]int, s int) ([]int, []int) {
-	//func getLength(n int, matrice [][]int, s int) ([]int, []int) {
-	//n := len(matrice)
-	//last := []int{9999, 99999, 99999}
-	//length := []int{0, 99999, 99999}
 	for i := 0; i < n; i++ {
 		if matrice[s][i] != NO_ROUTE {
 			if length[s]+matrice[s][i] < length[i] {
@@ -37,8 +36,6 @@ func allPass(m []bool) bool {
 }
 
 func dijistra(Nb_sommets int, tab [][]int, src int) ([]int, []int) {
-	//remplacer -1 dans le matrice par NO_ROUTE
-	//Nb_sommets := int(len(tab))
 	for i := 0; i < Nb_sommets; i++ {
 		for j := 0; j < Nb_sommets; j++ {
 			if tab[i][j] == -1 {
@@ -54,7 +51,7 @@ func dijistra(Nb_sommets int, tab [][]int, src int) ([]int, []int) {
 		route_pass[i] = NO_ROUTE
 	}
 	length_de_route[src] = 0
-	//判断哪些点被经过了。noter si les sommets sont passe
+	//noter si les sommets sont passe
 	sommets_pass := make([]bool, Nb_sommets)
 	for i := 0; i < Nb_sommets; i++ {
 		sommets_pass[i] = false
@@ -70,24 +67,18 @@ func dijistra(Nb_sommets int, tab [][]int, src int) ([]int, []int) {
 
 			}
 		}
-		print("source:", next_src)
+		//print("source:", next_src)
 		length_de_route, route_pass = getLength(Nb_sommets, length_de_route, route_pass, tab, next_src)
-		//length_de_route, route_pass = getLength(Nb_sommets, tab, next_src)
 		sommets_pass[next_src] = true
 	}
-	fmt.Print(sommets_pass)
+	//fmt.Print(sommets_pass)
 	return length_de_route, route_pass
 }
 
-func openfile(fN string) ([][]int, int, int) {
-	//var n int
-	var src int
-	src = 0
+func openfile(fN string) ([][]int, int) {
+	//var src int
+	//src = 0
 	file, err := os.Open(fN) // For read access.
-	/*var arr2 = make([][]int, n)
-	for j := 0; j < n; j++ {
-		arr2[j] = make([]int, n)
-	}*/
 
 	if err != nil {
 		fmt.Print(err)
@@ -96,18 +87,16 @@ func openfile(fN string) ([][]int, int, int) {
 	reader := bufio.NewReader(file)
 	str1, _ := reader.ReadString('\n')
 	arr0 := strings.Fields(str1)
-	fmt.Print("arr0:", arr0)
+	//fmt.Print("arr0:", arr0)
 	var n = len(arr0)
-	fmt.Print("le nombre de sommet est", len(arr0))
+	//fmt.Print("le nombre de sommet est", len(arr0))
 	var arr2 = make([][]int, n)
 
 	for j := 0; j < n; j++ {
 		arr2[j] = make([]int, n)
 	}
-	for {
-		fmt.Println("Merci d'entre le source de", fN, ":")
-		//fmt.Scanln(&src)
-		//src = 0
+	/*for {
+		//fmt.Println("Merci d'entre le source de", fN, ":")
 		fmt.Print(src)
 		if src < 0 || src >= n {
 			fmt.Println("source n'existe pas, merci de entrer un nombre entre 0 et", n-1)
@@ -115,35 +104,23 @@ func openfile(fN string) ([][]int, int, int) {
 		} else {
 			break
 		}
-	}
-	for j := 0; j < n; j++ {
-		//arr2[i] = make([]int, n)
-		arr2[0][j], _ = strconv.Atoi(arr0[j])
-		//print("i:", i, "j:", j, "arr:", arr2[i][j], "\n")
-		fmt.Println(arr2)
-	}
-	//var arr2 = make([][]int, n)
-	/*for j := 0; j < n; j++ {
-		arr2[j] = make([]int, n)
 	}*/
+	for j := 0; j < n; j++ {
+
+		arr2[0][j], _ = strconv.Atoi(arr0[j])
+
+		//fmt.Println(arr2)
+	}
+
 	for i := 1; i < n; i++ {
 		str, err := reader.ReadString('\n')
 		arr := strings.Fields(str)
-		//var n = len(arr)
-		//fmt.Print("le nombre de sommet est", len(arr))
-		/*if len(arr) != n {
-			fmt.Print("nombre de sommet incorrect")
-			os.Exit(1)
-		}
-		var arr2 = make([][]int, n)
+
 		for j := 0; j < n; j++ {
-			arr2[i] = make([]int, n)
-		}*/
-		for j := 0; j < n; j++ {
-			//arr2[i] = make([]int, n)
+
 			arr2[i][j], _ = strconv.Atoi(arr[j])
-			//print("i:", i, "j:", j, "arr:", arr2[i][j], "\n")
-			fmt.Println(arr2)
+
+			//fmt.Println(arr2)
 		}
 		if err != nil {
 			if err == io.EOF {
@@ -151,21 +128,16 @@ func openfile(fN string) ([][]int, int, int) {
 			}
 		}
 	}
-	//fmt.Print("arr:", arr2)
-	file.Close()
-	return arr2, n, src
 
-	//return arr2, n, src
+	file.Close()
+	return arr2, n
 
 }
-
-func Child(fileName string) {
-	fmt.Print("begin child")
-	tab, lenth, source := openfile(fileName)
+func godijistra(lenth int, tab [][]int, source int, fileName string) {
 	cost, road := dijistra(lenth, tab, source)
-	fmt.Print("road :", road)
-	fmt.Print("cost:", cost)
-	file, err := os.OpenFile("res"+fileName, os.O_CREATE|os.O_WRONLY, 0666)
+	//fmt.Print("road :", road)
+	//fmt.Print("cost:", cost)
+	file, err := os.OpenFile("res"+strconv.Itoa(source)+fileName, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -178,131 +150,223 @@ func Child(fileName string) {
 	}
 
 	for i := 0; i < lenth; i++ {
-		str = "\nthe road from " + strconv.Itoa(source) + " to " + strconv.Itoa(i) + " est \n" + strconv.Itoa(i) + "<-"
-		file.WriteString(str)
-		for q := i; road[q] != NO_ROUTE; {
-			if road[q] == source {
-				str2 := strconv.Itoa(road[q])
-				q = road[q]
-				file.WriteString(str2)
-			} else {
-				str2 := strconv.Itoa(road[q]) + "<-"
-				q = road[q]
-				file.WriteString(str2)
+		if i != source {
+			str = "\nthe road from " + strconv.Itoa(source) + " to " + strconv.Itoa(i) + " est \n" + strconv.Itoa(i) + "<-"
+			file.WriteString(str)
+			for q := i; road[q] != NO_ROUTE; {
+				if road[q] == source {
+					str2 := strconv.Itoa(road[q])
+					q = road[q]
+					file.WriteString(str2)
+				} else {
+					str2 := strconv.Itoa(road[q]) + "<-"
+					q = road[q]
+					file.WriteString(str2)
+				}
 			}
 		}
 	}
+	file.WriteString("\n\n\n")
+	file.Close()
+}
+func Child(fileName string) {
+	//time_start := time.Now()
+	fmt.Print("begin child")
+	tab, lenth := openfile(fileName)
+	var nbgorouting int
+	fmt.Println("how many gorouting do you want?")
+	fmt.Scanln(&nbgorouting)
+	for nbgorouting < 1 {
+		fmt.Println("Wrong number, redo please")
+		fmt.Scanln(&nbgorouting)
+	}
+	time_start := time.Now()
+	if lenth <= nbgorouting {
+		for i := 0; i < lenth; i++ {
+			go godijistra(lenth, tab, i, fileName)
+		}
+		var wg sync.WaitGroup
+		wg.Add(1) // Add one to the WaitGroup counter
 
+		go func() {
+			defer wg.Done() // Decrement the WaitGroup counter when the goroutine finishes
+			time.Sleep(time.Second)
+			fmt.Println("Goroutine finished")
+		}()
+
+		fmt.Println("Waiting for goroutine to finish...")
+		wg.Wait() // Block until the WaitGroup counter is zero
+	} else {
+		for i := 0; i <= lenth/nbgorouting; i++ {
+			fmt.Print(i, "go................")
+			for j := 0; j < nbgorouting && j < (lenth-nbgorouting*i); j++ {
+				go godijistra(lenth, tab, nbgorouting*i+j, fileName)
+			}
+			var wg sync.WaitGroup
+			wg.Add(1) // Add one to the WaitGroup counter
+
+			go func() {
+				defer wg.Done() // Decrement the WaitGroup counter when the goroutine finishes
+				time.Sleep(time.Second)
+				fmt.Println("Goroutine finished")
+			}()
+
+			fmt.Println("Waiting for goroutine to finish...........")
+			wg.Wait() // Block until the WaitGroup counter is zero
+		}
+	}
+
+	fmt.Println("Goroutine finished")
+	fmt.Println("end")
+	time_end := time.Now()
+	time_fin := time_end.Sub(time_start)
+	fmt.Println("time utilise to calcul:", time_fin)
+	for i := 0; i < lenth; i++ {
+		//fmt.Println("i=", i)
+		fileToRead, err := os.Open("res" + strconv.Itoa(i) + fileName)
+		if err != nil {
+			panic(err)
+		}
+		defer fileToRead.Close()
+		//fmt.Println("open ok")
+		// Open the file to write
+		fileToWrite, err := os.OpenFile("res"+fileName, os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			panic(err)
+		}
+		defer fileToWrite.Close()
+
+		// Copy the contents of the file to read to the file to write
+		if _, err := io.Copy(fileToWrite, fileToRead); err != nil {
+			panic(err)
+		}
+		fileToRead.Close()
+	}
+	for i := 0; i < lenth; i++ {
+
+		err := os.RemoveAll("res" + strconv.Itoa(i) + fileName)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 }
 
-func SendFile(resFileName string, fileSize int64, conn net.Conn) {
+func SendFile(resFileName string, conn net.Conn) {
 	f, err := os.Open(resFileName)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer f.Close()
-	var count int64
+
 	for {
 		buf := make([]byte, 2048)
-		//读取文件内容
+		//read the file
 		n, err := f.Read(buf)
 		if err != nil && io.EOF == err {
-			fmt.Println("文件传输完成")
-			//告诉服务端结束文件接收
-			//conn.Write([]byte("ok"))
-			return
+			fmt.Println("transform end")
+			break
 		}
-		//发送给服务端
 		conn.Write(buf[:n])
 
-		count += int64(n)
-		sendPercent := float64(count) / float64(fileSize) * 100
-		value := fmt.Sprintf("%.2f", sendPercent)
-		//打印上传进度
-		fmt.Println("文件上传：" + value + "%")
+		fmt.Println("uploading......")
 	}
 }
 
 func Handler(conn net.Conn) {
 	buf := make([]byte, 2048)
-	//读取客户端发送的内容
-	n, err := conn.Read(buf)
+	//read the information of client
+	n0, err := conn.Read(buf)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fileName := string(buf[:n])
-	//获取客户端ip+port
+	fileName := string(buf[:n0])
+	//get the ip and port
 	addr := conn.RemoteAddr().String()
-	fmt.Println(addr + ": 客户端传输的文件名为--" + fileName)
-	//告诉客户端已经接收到文件名
+	fmt.Println(addr + ": name of the file transforming is--" + fileName)
 	conn.Write([]byte("ok"))
-	//创建文件
+	strn := string(buf[n0 : n0+10])
+	fileSize, _ := strconv.Atoi(strn)
+	buf = make([]byte, 2048)
+	n, err := conn.Read(buf)
 	f, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	//循环接收客户端传递的文件内容
-	buf = make([]byte, 2048)
-	//for {
-	fmt.Print(buf[:n])
-	fmt.Print("1")
-	n, err4 := conn.Read(buf)
-	if err4 != nil {
-		if err4 == io.EOF {
-			fmt.Println("文件接受完毕")
-			//i = NO_ROUTE
-			fmt.Println(addr + ": 协程结束")
-			//runtime.Goexit()
-			//break
-			fmt.Println(addr + ": 协程结束")
-		} else {
-			fmt.Println("conn.Read err", err4)
+	//recieve the file
+	received := 0
+	for {
+
+		fmt.Print(buf[:n])
+
+		n, err4 := conn.Read(buf)
+
+		if err4 != nil {
+			if err4 == io.EOF {
+				fmt.Println("file is recieved")
+			} else {
+				fmt.Println("conn.Read err", err4)
+			}
+		}
+		received += len(buf[:n])
+		//revData := string(buf[:n+10])
+		//print(revData + "!!!")
+
+		f.Write(buf[:n])
+		if received >= fileSize {
+			break
 		}
 	}
-	/*fmt.Print(buf[:n])
-	fmt.Print("1")*/
-	//结束协程
-	/*if string(buf[:n]) == "ok" {
-		fmt.Println(addr + ": 协程结束")
-		runtime.Goexit()
-	}*/
-	f.Write(buf[:n])
-	//}
-	//defer conn.Close()
-	fmt.Println("fclose")
+
+	//fmt.Println("fclose")
 	defer f.Close()
-	fmt.Println("close")
+	//fmt.Println("close")
 	Child(fileName)
+	//-----------------------------send file--------------------------------------------
 	resFileName := "res" + fileName
-	fileInfo, err := os.Stat(resFileName)
-	fileSize := fileInfo.Size()
-	conn2, err := net.Dial("tcp", ":8001")
+	resfileInfo, err := os.Stat(resFileName)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	defer conn2.Close()
-	conn2.Write([]byte(resFileName))
+	resfileSize := resfileInfo.Size()
+	//conn2, err := net.Dial("tcp", ":8001")
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//defer conn2.Close()
+	//conn2.Write([]byte(resFileName))
+	//print("1")
+	resfileSizeStr := strconv.FormatInt(resfileSize, 10)
+	conn.Write([]byte(resfileSizeStr)) //test
+	//print("2")
+	//buf2 := make([]byte, 2048)
 	buf2 := make([]byte, 2048)
-	//读取服务端内容
-	n2, err := conn2.Read(buf2)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	revData := string(buf2[:n2])
-	if revData == "ok" {
-		//发送文件数据
-		SendFile(resFileName, fileSize, conn2)
-	}
-	//SendFile(resFileName, fileSize, conn2)
+	//read the ifo of client
+	//n2, err := conn2.Read(buf2)
+	n2, err := conn.Read(buf2) //test
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	revData2 := string(buf2[:n2]) //test
+	//if revData == "ok" {
+	//send the name of file
+	//SendFile(resFileName, conn2)
+	//}
+	if revData2 == "ok" { //test
+		//send the name of file
+		//resfileSizeStr := strconv.FormatInt(resfileSize, 10)
+		//conn.Write([]byte(resfileSizeStr))
+		SendFile(resFileName, conn) //test
+	} //test
 }
 
 func main() {
-	//创建tcp监听
+	//creat the tcp
 	listen, err := net.Listen("tcp", ":8000")
 	if err != nil {
 		fmt.Println(err)
@@ -311,16 +375,16 @@ func main() {
 	defer listen.Close()
 
 	for {
-		//阻塞等待客户端
+		//wait for connection
 		conn, err := listen.Accept()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		//创建协程
+
 		defer conn.Close()
 		go Handler(conn)
 
 	}
-
 }
+
